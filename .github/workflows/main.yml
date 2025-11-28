@@ -9,6 +9,7 @@ jobs:
     timeout-minutes: 3600
 
     steps:
+
       - name: Configure RDP
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force
@@ -17,6 +18,7 @@ jobs:
           netsh advfirewall firewall delete rule name="RDP-Tailscale"
           netsh advfirewall firewall add rule name="RDP-Tailscale" dir=in action=allow protocol=TCP localport=3389
           Restart-Service -Name TermService -Force
+
 
       - name: Create RDP User
         run: |
@@ -29,6 +31,7 @@ jobs:
           Add-LocalGroupMember -Group "Remote Desktop Users" -Member "RDP"
           echo "RDP_CREDS=User: RDP | Password: $p" >> $env:GITHUB_ENV
 
+
       - name: Install Brave
         run: |
           $url = "https://brave-browser-downloads.s3.brave.com/latest/brave_installer-x64.exe"
@@ -37,11 +40,13 @@ jobs:
           Start-Process -FilePath $installer -ArgumentList "--install","--silent","--system-level" -Wait
           Remove-Item $installer -Force
 
+
       - name: Checkout App Repo
         uses: actions/checkout@v4
         with:
           repository: GAMER-SHIVANSH/KARMEXE1
           path: karmexe
+
 
       - name: Copy App Files
         run: |
@@ -51,12 +56,31 @@ jobs:
           Copy-Item "karmexe\config" -Destination $root -Recurse -Force
           Copy-Item "karmexe\.name_config" -Destination $root -Force
 
-      - name: Start recent.exe
+
+      - name: Create logon scheduled task for recent.exe
+        run: |
+          $root = "$env:SystemDrive\KARMEXE"
+          $exe  = Join-Path $root "recent.exe"
+
+          if (-not (Test-Path $exe)) {
+            Write-Error "recent.exe not found at $exe"
+            exit 1
+          }
+
+          $cmd = "cd /d `"$root`" && start "" recent.exe"
+          $action  = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c $cmd"
+          $trigger = New-ScheduledTaskTrigger -AtLogOn
+
+          Register-ScheduledTask -TaskName "KarmexeRecent" -Action $action -Trigger $trigger -RunLevel Highest -User "SYSTEM"
+
+
+      - name: Start recent.exe immediately
         run: |
           $root = "$env:SystemDrive\KARMEXE"
           $exe  = Join-Path $root "recent.exe"
           if (-not (Test-Path $exe)) { Write-Error "recent.exe not found at $exe"; exit 1 }
           Start-Process -FilePath $exe -WorkingDirectory $root
+
 
       - name: Install Tailscale
         run: |
@@ -64,6 +88,7 @@ jobs:
           Invoke-WebRequest -Uri "https://pkgs.tailscale.com/stable/tailscale-setup-1.82.0-amd64.msi" -OutFile $i
           Start-Process msiexec.exe -ArgumentList "/i", "`"$i`"", "/quiet", "/norestart" -Wait
           Remove-Item $i -Force
+
 
       - name: Connect Tailscale
         run: |
@@ -73,10 +98,12 @@ jobs:
           if (-not $ip) { exit 1 }
           echo "TAILSCALE_IP=$ip" >> $env:GITHUB_ENV
 
+
       - name: Verify RDP
         run: |
           $r=Test-NetConnection -ComputerName $env:TAILSCALE_IP -Port 3389
           if (-not $r.TcpTestSucceeded) { exit 1 }
+
 
       - name: Keep Alive
         run: |
