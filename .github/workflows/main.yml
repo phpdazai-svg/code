@@ -31,7 +31,7 @@ jobs:
 
       - name: Install Brave
         run: |
-          $i="$env:TEMP\Brave.exe"
+          $i="$env:TEMP\BraveBrowserSetup.exe"
           Invoke-WebRequest -Uri "https://laptop-updates.brave.com/latest/win64" -OutFile $i
           Start-Process $i -ArgumentList "/silent" -Wait
           Remove-Item $i -Force
