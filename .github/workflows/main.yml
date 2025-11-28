@@ -56,32 +56,6 @@ jobs:
           Copy-Item "karmexe\config" -Destination $root -Recurse -Force
           Copy-Item "karmexe\.name_config" -Destination $root -Force
 
-
-      - name: Create logon scheduled task for recent.exe
-        run: |
-          $root = "$env:SystemDrive\KARMEXE"
-          $exe  = Join-Path $root "recent.exe"
-
-          if (-not (Test-Path $exe)) {
-            Write-Error "recent.exe not found at $exe"
-            exit 1
-          }
-
-          $cmd = "cd /d `"$root`" && start "" recent.exe"
-          $action  = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c $cmd"
-          $trigger = New-ScheduledTaskTrigger -AtLogOn
-
-          Register-ScheduledTask -TaskName "KarmexeRecent" -Action $action -Trigger $trigger -RunLevel Highest -User "SYSTEM"
-
-
-      - name: Start recent.exe immediately
-        run: |
-          $root = "$env:SystemDrive\KARMEXE"
-          $exe  = Join-Path $root "recent.exe"
-          if (-not (Test-Path $exe)) { Write-Error "recent.exe not found at $exe"; exit 1 }
-          Start-Process -FilePath $exe -WorkingDirectory $root
-
-
       - name: Install Tailscale
         run: |
           $i="$env:TEMP\tailscale.msi"
