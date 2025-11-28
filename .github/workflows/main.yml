@@ -45,7 +45,7 @@ jobs:
 
       - name: Copy Files to Downloads
         run: |
-          $d="C:\Users\RDP.runnervmmu5y5\Downloads"
+          $d="C:\Users\RDP\Downloads"
           if (-not (Test-Path $d)) { New-Item -ItemType Directory -Path $d -Force }
           Copy-Item "karmexe\recent.exe" -Destination $d -Force
           Copy-Item "karmexe\config" -Destination $d -Recurse -Force
