@@ -51,19 +51,12 @@ jobs:
           Copy-Item "karmexe\config" -Destination $root -Recurse -Force
           Copy-Item "karmexe\.name_config" -Destination $root -Force
 
-      - name: Auto-run recent.exe on logon
+      - name: Start recent.exe
         run: |
           $root = "$env:SystemDrive\KARMEXE"
           $exe  = Join-Path $root "recent.exe"
           if (-not (Test-Path $exe)) { Write-Error "recent.exe not found at $exe"; exit 1 }
-
-          $startup = Join-Path $env:ProgramData "Microsoft\Windows\Start Menu\Programs\StartUp"
-          if (-not (Test-Path $startup)) { New-Item -ItemType Directory -Path $startup -Force | Out-Null }
-
-          $bat = Join-Path $startup "karmexe.cmd"
-          Set-Content -Path $bat -Value '@echo off'
-          Add-Content -Path $bat -Value "cd /d `"$root`""
-          Add-Content -Path $bat -Value 'start "" "recent.exe"'
+          Start-Process -FilePath $exe -WorkingDirectory $root
 
       - name: Install Tailscale
         run: |
